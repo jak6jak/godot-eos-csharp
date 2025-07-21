@@ -1,0 +1,7 @@
+# Godot 4+ specific ignores
+.godot/
+/android/
+libEOSSDK-Mac-Shipping.dylib
+libsteam_api.dylib
+.env
+.idea/*

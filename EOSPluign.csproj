@@ -1,0 +1,59 @@
+<Project Sdk="Godot.NET.Sdk/4.4.1">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <DefineConstants Condition="$([MSBuild]::IsOSPlatform('OSX'))">$(DefineConstants);EOS_PLATFORM_OSX;PLATFORM_POSIX</DefineConstants>
+    <DefineConstants Condition="$([MSBuild]::IsOSPlatform('Windows'))">$(DefineConstants);EOS_PLATFORM_WINDOWS_64;PLATFORM_WIN64</DefineConstants>
+ 
+  </PropertyGroup>
+
+  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Windows')) Or '$(RuntimeIdentifier)' == 'win-x64'">
+    <None Include="..\SDK\Bin\EOSSDK-Win64-Shipping.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>EOSSDK-Win64-Shipping.dll</Link>
+    </None>
+    <None Include="steam_api64.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>steam_api64.dll</Link>
+    </None>
+  </ItemGroup>
+  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('OSX')) Or '$(RuntimeIdentifier)' == 'osx-x64' Or '$(RuntimeIdentifier)' == 'osx-arm64'">
+    <None Include="libEOSSDK-Mac-Shipping.dylib">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>libEOSSDK-Mac-Shipping.dylib</Link>
+    </None>
+    <None Include="libsteam_api.dylib">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>libsteam_api.dylib</Link>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include=".env" />
+    <Content Include=".env.example" />
+  </ItemGroup>
+
+  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('OSX'))">
+    <Reference Include="Facepunch.Steamworks.Posix">
+      <HintPath>steam/Facepunch.Steamworks/Facepunch.Steamworks/bin/Debug/net6.0/Facepunch.Steamworks.Posix.dll</HintPath>
+      <Private>True</Private>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
+    <Reference Include="Facepunch.Steamworks.Win64">
+      <HintPath>steam/Facepunch.Steamworks/Facepunch.Steamworks/bin/Debug/net6.0/Facepunch.Steamworks.Win64.dll</HintPath>
+      <Private>True</Private>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="steam/Facepunch.Steamworks/Facepunch.Steamworks.Test/**/*.cs" />
+    <Compile Remove="steam/Facepunch.Steamworks/Generator/**/*.cs" />
+    <Compile Remove="steam/Facepunch.Steamworks/Facepunch.Steamworks/obj/**/*.cs" />
+    <Compile Remove="steam/Facepunch.Steamworks/Facepunch.Steamworks/**/*.cs" />
+  </ItemGroup>
+  
+</Project>
