@@ -12,6 +12,8 @@ public partial class EOSInterfaceManager : Node
     public bool IsInitialized { get; private set; }
     public PlatformInterface Platform {private set; get;}
     public EOSConfiguration Configuration { private set; get; }
+    private double  PlatformTickTimer { get; set; }
+    private double PlatformTickInterval { get; set; } = 0.1f;
     public override void _EnterTree()
     {
         Instance = this;
@@ -20,7 +22,7 @@ public partial class EOSInterfaceManager : Node
 
     public override void _Ready()
     {
-        
+        GD.Print("Initializing EOS");
         Configuration = new EOSConfiguration();
         Configuration.LoadConfig();
         var options = new InitializeOptions()
@@ -42,59 +44,45 @@ public partial class EOSInterfaceManager : Node
         
         Epic.OnlineServices.Logging.LoggingInterface.SetCallback((ref Epic.OnlineServices.Logging.LogMessage logMessage) =>
             GD.Print(logMessage.Message));
+
+        var platformOptions = new Epic.OnlineServices.Platform.Options()
+        {
+            ProductId = Configuration.ProductId,
+            SandboxId = Configuration.SandboxId,
+            DeploymentId = Configuration.DeploymentId,
+            ClientCredentials = 
+                new ClientCredentials()
+                {
+                    ClientId = Configuration.ClientId,
+                    ClientSecret = Configuration.ClientSecret,
+                }
+        };
+        Platform = PlatformInterface.Create(ref platformOptions);
+        if (Platform == null)
+        {
+            GD.PushError("Failed to create EOS platform");
+            OnServiceError("EOS", "Failed to create EOS platform");
+        }
+    }
+    
+    public override void _PhysicsProcess(double delta) {
+        if (Platform != null) {
+            PlatformTickTimer += delta;
+
+            if (PlatformTickTimer >= PlatformTickInterval) {
+                PlatformTickTimer = 0;
+
+                Platform.Tick();
+            }
+        }
     }
     
     public override void _ExitTree()
     {
         base._ExitTree();
-        
+        Platform.Release();
+        PlatformInterface.Shutdown();
     }
-/*
-    private async void InitializeEOSAsync()
-    {
-        try
-        {
-            await InitializeEOS();
-        }
-        catch (Exception e)
-        {
-            GD.PushError($"Failed to initialize EOS: {e.Message}");
-            OnServiceError("EOS", $"Failed to initialize EOS: {e.Message}");
-        }
-    }
-
-    private async Task InitializeEOS()
-    {
-        if (IsInitialized)
-        {
-            GD.PushWarning("Already init");   
-        }
-        
-        
-    }
-
-    private void LoadConfiguration()
-    {
-        try
-        {
-            Configuration = new EOSConfiguration();
-            var err = Configuration.LoadConfig();
-            if (err != Error.Ok)
-            {
-                throw new Exception($"Failed to load EOS configuration: {err}");
-            }
-        }
-        catch (Exception e)
-        {
-            throw new Exception($"Failed to load EOS configuration: {e.Message}",e);
-        }
-    }
-
-    private void InitializeEOSSDK()
-    {
-        var result = Platform.
-    }
-    */
     public void OnServiceError(string serviceName, string message)
     {
         GD.PrintErr($"Service error from {serviceName}: {message}");
