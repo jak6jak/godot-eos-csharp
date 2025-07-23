@@ -1,4 +1,4 @@
-<Project Sdk="Godot.NET.Sdk/4.4.0">
+<Project Sdk="Godot.NET.Sdk/4.4.1">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <EnableDynamicLoading>true</EnableDynamicLoading>
@@ -27,73 +27,65 @@
   <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Windows')) Or '$(RuntimeIdentifier)' == 'win-x64'">
     <!-- Copy to both plugin directory and project root -->
     <None Include="addons/eosplugin/thirdparty/EOSSDK-Win64-Shipping.dll">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>EOSSDK-Win64-Shipping.dll</Link>
     </None>
     <None Include="addons/eosplugin/thirdparty/EOSSDK-Win64-Shipping.dll">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>addons/eosplugin/EOSSDK-Win64-Shipping.dll</Link>
     </None>
     <None Include="addons/eosplugin/thirdparty/steam_api64.dll">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>steam_api64.dll</Link>
     </None>
     <None Include="addons/eosplugin/thirdparty/steam_api64.dll">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>addons/eosplugin/steam_api64.dll</Link>
     </None>
     <Reference Include="addons/eosplugin/Facepunch.Steamworks.Win64">
-      <HintPath>thirdparty/Facepunch.Steamworks.Win64.dll</HintPath>
+      <HintPath>addons/eosplugin/thirdparty/Facepunch.Steamworks.Win64.dll</HintPath>
       <Private>True</Private>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Reference>
   </ItemGroup>
 
   <!-- macOS Native Libraries - Plugin Path -->
   <ItemGroup Condition="$([MSBuild]::IsOSPlatform('OSX')) Or '$(RuntimeIdentifier)' == 'osx-x64' Or '$(RuntimeIdentifier)' == 'osx-arm64'">
-    <None Include="thirdparty/libEOSSDK-Mac-Shipping.dylib">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    <None Include="addons/eosplugin/thirdparty/libEOSSDK-Mac-Shipping.dylib">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>libEOSSDK-Mac-Shipping.dylib</Link>
     </None>
-    <None Include="thirdparty/libEOSSDK-Mac-Shipping.dylib">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      <Link>addons/eosplugin/libEOSSDK-Mac-Shipping.dylib</Link>
-    </None>
-    <None Include="thirdparty/libsteam_api.dylib">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    <None Include="addons/eosplugin/thirdparty/libsteam_api.dylib">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>libsteam_api.dylib</Link>
     </None>
-    <None Include="thirdparty/libsteam_api.dylib">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      <Link>addons/eosplugin/libsteam_api.dylib</Link>
-    </None>
     <Reference Include="Facepunch.Steamworks.Posix">
-      <HintPath>thirdparty/Facepunch.Steamworks.Posix.dll</HintPath>
+      <HintPath>addons/eosplugin/thirdparty/Facepunch.Steamworks.Posix.dll</HintPath>
       <Private>True</Private>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Reference>
   </ItemGroup>
 
   <!-- Linux Native Libraries - Plugin Path -->
   <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Linux')) Or '$(RuntimeIdentifier)' == 'linux-x64'">
-    <None Include="thirdparty/libEOSSDK-Linux-Shipping.so">
+    <None Include="addons/eosplugin/thirdparty/libEOSSDK-Linux-Shipping.so">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <Link>libEOSSDK-Linux-Shipping.so</Link>
     </None>
-    <None Include="thirdparty/libEOSSDK-Linux-Shipping.so">
+    <None Include="addons/eosplugin/thirdparty/libEOSSDK-Linux-Shipping.so">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <Link>addons/eosplugin/libEOSSDK-Linux-Shipping.so</Link>
     </None>
-    <None Include="thirdparty/libsteam_api.so">
+    <None Include="addons/eosplugin/thirdparty/libsteam_api.so">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <Link>libsteam_api.so</Link>
     </None>
-    <None Include="thirdparty/libsteam_api.so">
+    <None Include="addons/eosplugin/thirdparty/libsteam_api.so">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <Link>addons/eosplugin/libsteam_api.so</Link>
     </None>
     <Reference Include="Facepunch.Steamworks.Posix">
-      <HintPath>thirdparty/Facepunch.Steamworks.Posix.dll</HintPath>
+      <HintPath>addons/eosplugin/thirdparty/Facepunch.Steamworks.Posix.dll</HintPath>
       <Private>True</Private>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Reference>
