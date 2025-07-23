@@ -1,59 +1,116 @@
-<Project Sdk="Godot.NET.Sdk/4.4.1">
+<Project Sdk="Godot.NET.Sdk/4.4.0">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <EnableDynamicLoading>true</EnableDynamicLoading>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <DefineConstants>$(DefineConstants)</DefineConstants>
+    <Configurations>Debug;ExportDebug;ExportRelease;</Configurations>
     <DefineConstants Condition="$([MSBuild]::IsOSPlatform('OSX'))">$(DefineConstants);EOS_PLATFORM_OSX;PLATFORM_POSIX</DefineConstants>
     <DefineConstants Condition="$([MSBuild]::IsOSPlatform('Windows'))">$(DefineConstants);EOS_PLATFORM_WINDOWS_64;PLATFORM_WIN64</DefineConstants>
- 
+    <DefineConstants Condition="$([MSBuild]::IsOSPlatform('Linux'))">$(DefineConstants);EOS_PLATFORM_LINUX;PLATFORM_POSIX</DefineConstants>
   </PropertyGroup>
 
+  <!-- Include EOS SDK Source Files -->
+  <ItemGroup>
+    <Compile Include="..\SDK\Source\Core\**\*.cs">
+      <Link>SDK\Core\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Compile>
+    <Compile Include="..\SDK\Source\Generated\**\*.cs">
+      <Link>SDK\Generated\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Compile>
+    <Compile Include="..\SDK\Source\Overrides\**\*.cs">
+      <Link>SDK\Overrides\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Compile>
+  </ItemGroup>
+
+  <!-- Windows Native Libraries - Plugin Path -->
   <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Windows')) Or '$(RuntimeIdentifier)' == 'win-x64'">
-    <None Include="..\SDK\Bin\EOSSDK-Win64-Shipping.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <!-- Copy to both plugin directory and project root -->
+    <None Include="addons/eosplugin/thirdparty/EOSSDK-Win64-Shipping.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <Link>EOSSDK-Win64-Shipping.dll</Link>
     </None>
-    <None Include="steam_api64.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <None Include="addons/eosplugin/thirdparty/EOSSDK-Win64-Shipping.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <Link>addons/eosplugin/EOSSDK-Win64-Shipping.dll</Link>
+    </None>
+    <None Include="addons/eosplugin/thirdparty/steam_api64.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <Link>steam_api64.dll</Link>
     </None>
+    <None Include="addons/eosplugin/thirdparty/steam_api64.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <Link>addons/eosplugin/steam_api64.dll</Link>
+    </None>
+    <Reference Include="addons/eosplugin/Facepunch.Steamworks.Win64">
+      <HintPath>thirdparty/Facepunch.Steamworks.Win64.dll</HintPath>
+      <Private>True</Private>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Reference>
   </ItemGroup>
+
+  <!-- macOS Native Libraries - Plugin Path -->
   <ItemGroup Condition="$([MSBuild]::IsOSPlatform('OSX')) Or '$(RuntimeIdentifier)' == 'osx-x64' Or '$(RuntimeIdentifier)' == 'osx-arm64'">
-    <None Include="libEOSSDK-Mac-Shipping.dylib">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <None Include="thirdparty/libEOSSDK-Mac-Shipping.dylib">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <Link>libEOSSDK-Mac-Shipping.dylib</Link>
     </None>
-    <None Include="libsteam_api.dylib">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <None Include="thirdparty/libEOSSDK-Mac-Shipping.dylib">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <Link>addons/eosplugin/libEOSSDK-Mac-Shipping.dylib</Link>
+    </None>
+    <None Include="thirdparty/libsteam_api.dylib">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <Link>libsteam_api.dylib</Link>
     </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include=".env" />
-    <Content Include=".env.example" />
-  </ItemGroup>
-
-  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('OSX'))">
+    <None Include="thirdparty/libsteam_api.dylib">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <Link>addons/eosplugin/libsteam_api.dylib</Link>
+    </None>
     <Reference Include="Facepunch.Steamworks.Posix">
-      <HintPath>steam/Facepunch.Steamworks/Facepunch.Steamworks/bin/Debug/net6.0/Facepunch.Steamworks.Posix.dll</HintPath>
+      <HintPath>thirdparty/Facepunch.Steamworks.Posix.dll</HintPath>
       <Private>True</Private>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Reference>
   </ItemGroup>
 
-  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
-    <Reference Include="Facepunch.Steamworks.Win64">
-      <HintPath>steam/Facepunch.Steamworks/Facepunch.Steamworks/bin/Debug/net6.0/Facepunch.Steamworks.Win64.dll</HintPath>
+  <!-- Linux Native Libraries - Plugin Path -->
+  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Linux')) Or '$(RuntimeIdentifier)' == 'linux-x64'">
+    <None Include="thirdparty/libEOSSDK-Linux-Shipping.so">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <Link>libEOSSDK-Linux-Shipping.so</Link>
+    </None>
+    <None Include="thirdparty/libEOSSDK-Linux-Shipping.so">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <Link>addons/eosplugin/libEOSSDK-Linux-Shipping.so</Link>
+    </None>
+    <None Include="thirdparty/libsteam_api.so">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <Link>libsteam_api.so</Link>
+    </None>
+    <None Include="thirdparty/libsteam_api.so">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <Link>addons/eosplugin/libsteam_api.so</Link>
+    </None>
+    <Reference Include="Facepunch.Steamworks.Posix">
+      <HintPath>thirdparty/Facepunch.Steamworks.Posix.dll</HintPath>
       <Private>True</Private>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Reference>
   </ItemGroup>
 
+  <!-- Exclude unwanted Steam files -->
   <ItemGroup>
     <Compile Remove="steam/Facepunch.Steamworks/Facepunch.Steamworks.Test/**/*.cs" />
     <Compile Remove="steam/Facepunch.Steamworks/Generator/**/*.cs" />
     <Compile Remove="steam/Facepunch.Steamworks/Facepunch.Steamworks/obj/**/*.cs" />
     <Compile Remove="steam/Facepunch.Steamworks/Facepunch.Steamworks/**/*.cs" />
   </ItemGroup>
-  
+
+  <!-- Configuration Files -->
+  <ItemGroup>
+    <Content Include="EOSconfig.cfg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
 </Project>

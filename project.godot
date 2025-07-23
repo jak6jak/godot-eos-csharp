@@ -11,8 +11,13 @@ config_version=5
 [application]
 
 config/name="EOSPluign"
-config/features=PackedStringArray("4.4", "C#", "Mobile")
+run/main_scene="res://Test.tscn"
+config/features=PackedStringArray("4.3", "C#", "Mobile")
 config/icon="res://icon.svg"
+
+[autoload]
+
+EosInterfaceManager="*res://addons/eosplugin/Core/EOSInterfaceManager.cs"
 
 [dotnet]
 

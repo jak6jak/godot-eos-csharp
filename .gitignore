@@ -5,3 +5,5 @@ libEOSSDK-Mac-Shipping.dylib
 libsteam_api.dylib
 .env
 .idea/*
+thirdparty/
+EOSconfig.cfg
