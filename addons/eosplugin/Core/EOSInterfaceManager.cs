@@ -36,8 +36,8 @@ public partial class EOSInterfaceManager : Node
         EOSConfiguration.LoadConfig();
         var options = new InitializeOptions()
         {
-            ProductName = EOSConfiguration.ConfigFields[ EOSConfiguration.Configfield.ProductName],
-            ProductVersion =EOSConfiguration.ConfigFields[ EOSConfiguration.Configfield.ProductVersion],
+            ProductName = EOSConfiguration.ConfigFields[ EOSConfiguration.RequiredConfigFields.ProductName],
+            ProductVersion =EOSConfiguration.ConfigFields[ EOSConfiguration.RequiredConfigFields.ProductVersion],
         };
         
         var result = PlatformInterface.Initialize(ref options);
@@ -56,14 +56,14 @@ public partial class EOSInterfaceManager : Node
 
         var platformOptions = new Epic.OnlineServices.Platform.Options()
         {
-            ProductId = EOSConfiguration.ConfigFields[ EOSConfiguration.Configfield.EosProductId],
-            SandboxId = EOSConfiguration.ConfigFields[ EOSConfiguration.Configfield.EosSandboxId],
-            DeploymentId = EOSConfiguration.ConfigFields[ EOSConfiguration.Configfield.EosDeploymentId],
+            ProductId = EOSConfiguration.ConfigFields[ EOSConfiguration.RequiredConfigFields.EosProductId],
+            SandboxId = EOSConfiguration.ConfigFields[ EOSConfiguration.RequiredConfigFields.EosSandboxId],
+            DeploymentId = EOSConfiguration.ConfigFields[ EOSConfiguration.RequiredConfigFields.EosDeploymentId],
             ClientCredentials = 
                 new ClientCredentials()
                 {
-                    ClientId =EOSConfiguration.ConfigFields[ EOSConfiguration.Configfield.EosClientId],
-                    ClientSecret = EOSConfiguration.ConfigFields[ EOSConfiguration.Configfield.EosClientSecret],
+                    ClientId =EOSConfiguration.ConfigFields[ EOSConfiguration.RequiredConfigFields.EosClientId],
+                    ClientSecret = EOSConfiguration.ConfigFields[ EOSConfiguration.RequiredConfigFields.EosClientSecret],
                 }
         };
         Platform = PlatformInterface.Create(ref platformOptions);

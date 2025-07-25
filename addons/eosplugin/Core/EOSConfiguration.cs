@@ -9,7 +9,7 @@ namespace EOSPluign.addons.eosplugin;
 public class EOSConfiguration
 {
     
-    public enum Configfield{
+    public enum RequiredConfigFields{
         ProductName,
         ProductVersion,
         DefaultCredentialType,
@@ -20,8 +20,14 @@ public class EOSConfiguration
         EosClientSecret,
             
     }
+
+    public enum OptionalConfigFields
+    {
+        DevAuthPort,
+        DevAuthToken,
+    }
     
-    public static Dictionary<Configfield, string> ConfigFields { get; private set; } = new Dictionary<Configfield, string>();
+    public static Dictionary<RequiredConfigFields, string> ConfigFields { get; private set; } = new Dictionary<RequiredConfigFields, string>();
     public EOSConfiguration()
     {
         //var err =  LoadConfig();
@@ -46,7 +52,7 @@ public class EOSConfiguration
             return err;
         }
         
-        foreach (var fieldsKey in Enum.GetValues(typeof(Configfield)).Cast<Configfield>())
+        foreach (var fieldsKey in Enum.GetValues(typeof(RequiredConfigFields)).Cast<RequiredConfigFields>())
         {
             
             string val = (string)_configFile.GetValue(sectionID, fieldsKey.ToString(), "bazinga");
@@ -74,7 +80,7 @@ public class EOSConfiguration
     public static void CreateConfig()
     {
         _configFile = new ConfigFile();
-        foreach (var configField in Enum.GetValues(typeof(Configfield)).Cast<Configfield>())
+        foreach (var configField in Enum.GetValues(typeof(RequiredConfigFields)).Cast<RequiredConfigFields>())
         {
            _configFile.SetValue(sectionID, configField.ToString(), ""); 
         }

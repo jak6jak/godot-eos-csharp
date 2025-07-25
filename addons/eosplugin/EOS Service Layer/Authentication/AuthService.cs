@@ -276,8 +276,36 @@ public partial class AuthService : BaseEOSService
         
         // Fallback to persistent auth
         GD.Print("No exchange code found, attempting AccountPortal login...");
-        LoginWithAccountPortal();
+        if (EOSConfiguration.ConfigFields[EOSConfiguration.RequiredConfigFields.DefaultCredentialType] == "Developer")
+        {
+            LoginWithDevPortal();
+        }else if (EOSConfiguration.ConfigFields[EOSConfiguration.RequiredConfigFields.DefaultCredentialType] ==
+                  "AccountPortal")
+        {
+            LoginWithAccountPortal();
+        }
+        
+        
     }
+
+    private void LoginWithDevPortal()
+    {
+        if (!EnsureInitialized("login with Dev Portal"))
+            return;
+        
+        LoginOptions loginOptions = new LoginOptions()
+        {
+            Credentials = new Credentials()
+            {
+                Type = LoginCredentialType.Developer,
+                Id = "localhost:9876",
+                Token = "DevUser1"
+            },
+            ScopeFlags = AuthScopeFlags.BasicProfile | AuthScopeFlags.FriendsList | AuthScopeFlags.Presence
+        };
+        _authInterface.Login(ref loginOptions, null, OnLoginComplete);
+    }
+
     /// <summary>
     /// Attempts to login with Steam if Steam is available
     /// </summary>
