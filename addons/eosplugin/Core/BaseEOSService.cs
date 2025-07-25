@@ -9,6 +9,8 @@ public abstract partial class BaseEOSService : Node
     protected EOSInterfaceManager Manager { get; private set; }
     protected bool IsInitialized { get; private set; }
     
+    
+    
     public virtual void Initialize(EOSInterfaceManager manager)
     {
         if (IsInitialized)

@@ -1,0 +1,14 @@
+{
+  "runtimeOptions": {
+    "configProperties": {
+      "System.Runtime.InteropServices.EnableCOMHosting": false,
+      "System.Runtime.InteropServices.EnableNativeLibrarySearchDirectories": true,
+      "System.Runtime.InteropServices.DllImportSearchPath": "AssemblyDirectory|ApplicationDirectory|UserDirectories|UseDllDirectoryForDependencies"
+    },
+    "additionalProbingPaths": [
+      "addons/eosplugin/thirdparty",
+      "addons/eosplugin",
+      "."
+    ]
+  }
+}

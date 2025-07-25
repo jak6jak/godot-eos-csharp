@@ -1,75 +1,84 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Epic.OnlineServices.Auth;
 using Godot;
 
 namespace EOSPluign.addons.eosplugin;
 
 public class EOSConfiguration
 {
-    public string ConfigVersion { get; private set; } = "1.0";
-    public string ProductName { get; private set; }
-    public string ProductVersion { get; private set; }
-    public string ProductId { get; private set; }
-    public string SandboxId { get; private set; }
-    public string DeploymentId { get; private set; }
-    public string ClientId { get; private set; }
-    public string ClientSecret { get; private set; }
-
-
+    
+    public enum Configfield{
+        ProductName,
+        ProductVersion,
+        DefaultCredentialType,
+        EosProductId,
+        EosSandboxId,
+        EosDeploymentId,
+        EosClientId,
+        EosClientSecret,
+            
+    }
+    
+    public static Dictionary<Configfield, string> ConfigFields { get; private set; } = new Dictionary<Configfield, string>();
     public EOSConfiguration()
     {
         //var err =  LoadConfig();
     }
     
     private const string CONFIG_PATH = "res://EOSconfig.cfg";
-    private ConfigFile _configFile;
-    public Error LoadConfig()
+    private static ConfigFile _configFile;
+    private static string sectionID = "EOS";
+    public static Error LoadConfig()
     {
         _configFile = new ConfigFile();
         Error err = _configFile.Load(CONFIG_PATH);
         if (err != Error.Ok)
         {
+            if (err == Error.FileNotFound)
+            {
+                CreateConfig();
+                GD.PushWarning("Config file not found. Creating new config file.");
+                return err;
+            }
             GD.PushWarning("Error loading config file: " + err.ToString());
             return err;
         }
-
-        if ((string)_configFile.GetValue("Config", "CONFIG_VERSION", "") != ConfigVersion)
-        {
-            GD.PushError("Config version mismatch.");
-            return Error.ParseError;
-        }
         
-        
-        bool missing = false;
-        foreach (var section in _configFile.GetSections())
+        foreach (var fieldsKey in Enum.GetValues(typeof(Configfield)).Cast<Configfield>())
         {
-            foreach (var field in _configFile.GetSectionKeys(section))
-            {
-                if ((string)_configFile.GetValue(section, field, "") == "")
-                {
-                    GD.PushWarning("Missing value for " + field + " in " + section + " section. " +
-                                   "Make sure to fill out EOSConfig.cfg file");
-                    missing = true;
-                }
-            }
-        }
-
-        if (!missing)
-        {
-            ProductName = (string)_configFile.GetValue("ProductSettings", "PRODUCT_NAME", "");
-            ProductVersion = (string)_configFile.GetValue("ProductSettings", "PRODUCT_VERSION", "");
             
-            ProductId = (string)_configFile.GetValue("Secrets", "EOS_PRODUCT_ID", "");
-            SandboxId = (string)_configFile.GetValue("Secrets", "EOS_SANDBOX_ID", "");
-            DeploymentId = (string)_configFile.GetValue("Secrets", "EOS_DEPLOYMENT_ID", "");
-            ClientId = (string)_configFile.GetValue("Secrets", "EOS_CLIENT_ID", "");
-            ClientSecret = (string)_configFile.GetValue("Secrets", "EOS_CLIENT_SECRET", "");
-        }
-        else
-        {
-            return Error.FileNotFound;
-        }
+            string val = (string)_configFile.GetValue(sectionID, fieldsKey.ToString(), "bazinga");
+            if ( val == "")
+            {
+                GD.PushWarning("Missing value for " + fieldsKey.ToString() + " in EOS section. " +
+                               "Make sure to fill out EOSConfig.cfg file");
+            } else if (val == "bazinga")
+            {
+                GD.PushWarning("Missing entire Field for " + fieldsKey.ToString() + "in EOS config file." +
+                               "Creating Field with empty value.");
+                _configFile.SetValue(sectionID, fieldsKey.ToString(), "");
+            }
+            else
+            {
+                ConfigFields[fieldsKey] = val;
+            }
 
+            _configFile.Save(CONFIG_PATH);
+        }
+        
         return Error.Ok;
     }
-    
+
+    public static void CreateConfig()
+    {
+        _configFile = new ConfigFile();
+        foreach (var configField in Enum.GetValues(typeof(Configfield)).Cast<Configfield>())
+        {
+           _configFile.SetValue(sectionID, configField.ToString(), ""); 
+        }
+        _configFile.Save(CONFIG_PATH);
+    }
    
 }

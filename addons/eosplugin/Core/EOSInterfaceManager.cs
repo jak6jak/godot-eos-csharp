@@ -1,9 +1,13 @@
 using System;
 using System.Threading.Tasks;
+using EOSPluign.addons.eosplugin.EOS_Service_Layer.Authentication;
 using Godot;
 using Epic.OnlineServices;
 using Epic.OnlineServices.Platform;
 using Epic;
+using System.Runtime.InteropServices;
+using System.IO;
+using System.Reflection;
 namespace EOSPluign.addons.eosplugin;
 
 public partial class EOSInterfaceManager : Node
@@ -11,24 +15,29 @@ public partial class EOSInterfaceManager : Node
     public static EOSInterfaceManager Instance { get; private set; }
     public bool IsInitialized { get; private set; }
     public PlatformInterface Platform {private set; get;}
+    public AuthService AuthService { private set; get; }
     public EOSConfiguration Configuration { private set; get; }
     private double  PlatformTickTimer { get; set; }
     private double PlatformTickInterval { get; set; } = 0.1f;
     public override void _EnterTree()
     {
         Instance = this;
+        SetupNativeLibraryResolver();
         base._EnterTree();
     }
 
     public override void _Ready()
     {
         GD.Print("Initializing EOS");
-        Configuration = new EOSConfiguration();
-        Configuration.LoadConfig();
+        
+        // Set up native library search paths before initializing EOS
+        SetupNativeLibraryPaths();
+        
+        EOSConfiguration.LoadConfig();
         var options = new InitializeOptions()
         {
-            ProductName = Configuration.ProductName,
-            ProductVersion = Configuration.ProductVersion,
+            ProductName = EOSConfiguration.ConfigFields[ EOSConfiguration.Configfield.ProductName],
+            ProductVersion =EOSConfiguration.ConfigFields[ EOSConfiguration.Configfield.ProductVersion],
         };
         
         var result = PlatformInterface.Initialize(ref options);
@@ -47,14 +56,14 @@ public partial class EOSInterfaceManager : Node
 
         var platformOptions = new Epic.OnlineServices.Platform.Options()
         {
-            ProductId = Configuration.ProductId,
-            SandboxId = Configuration.SandboxId,
-            DeploymentId = Configuration.DeploymentId,
+            ProductId = EOSConfiguration.ConfigFields[ EOSConfiguration.Configfield.EosProductId],
+            SandboxId = EOSConfiguration.ConfigFields[ EOSConfiguration.Configfield.EosSandboxId],
+            DeploymentId = EOSConfiguration.ConfigFields[ EOSConfiguration.Configfield.EosDeploymentId],
             ClientCredentials = 
                 new ClientCredentials()
                 {
-                    ClientId = Configuration.ClientId,
-                    ClientSecret = Configuration.ClientSecret,
+                    ClientId =EOSConfiguration.ConfigFields[ EOSConfiguration.Configfield.EosClientId],
+                    ClientSecret = EOSConfiguration.ConfigFields[ EOSConfiguration.Configfield.EosClientSecret],
                 }
         };
         Platform = PlatformInterface.Create(ref platformOptions);
@@ -63,6 +72,8 @@ public partial class EOSInterfaceManager : Node
             GD.PushError("Failed to create EOS platform");
             OnServiceError("EOS", "Failed to create EOS platform");
         }
+        AuthService = new AuthService();
+        AuthService.Initialize(this);
     }
     
     public override void _PhysicsProcess(double delta) {
@@ -90,4 +101,87 @@ public partial class EOSInterfaceManager : Node
     }
     
     [Signal] public delegate void ServiceErrorEventHandler(string serviceName, string message);
+    
+    private void SetupNativeLibraryPaths()
+    {
+        try
+        {
+            // Add the plugin's thirdparty directory to the DLL search path
+            string pluginPath = Path.Combine(System.Environment.CurrentDirectory, "addons", "eosplugin", "thirdparty");
+            string outputPath = Path.Combine(System.Environment.CurrentDirectory, ".godot", "mono", "temp", "bin", "Debug");
+            
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                // Add directories to DLL search path for Windows
+                AddDllDirectory(pluginPath);
+                AddDllDirectory(outputPath);
+                
+                GD.Print($"Added DLL search paths: {pluginPath}, {outputPath}");
+                
+                // Set the DLL directory to include dependencies
+                SetDllDirectory(pluginPath);
+            }
+        }
+        catch (Exception ex)
+        {
+            GD.PrintErr($"Failed to setup native library paths: {ex.Message}");
+        }
+    }
+    
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool AddDllDirectory(string lpPathName);
+    
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool SetDllDirectory(string lpPathName);
+    
+    private void SetupNativeLibraryResolver()
+    {
+        NativeLibrary.SetDllImportResolver(Assembly.GetExecutingAssembly(), DllImportResolver);
+    }
+    
+    private static IntPtr DllImportResolver(string libraryName, Assembly assembly, DllImportSearchPath? searchPath)
+    {
+        // Define search paths for native libraries
+        string[] searchPaths = {
+            Path.Combine(System.Environment.CurrentDirectory, "addons", "eosplugin", "thirdparty"),
+            Path.Combine(System.Environment.CurrentDirectory, ".godot", "mono", "temp", "bin", "Debug"),
+            System.Environment.CurrentDirectory
+        };
+        
+        foreach (string searchDir in searchPaths)
+        {
+            string libraryPath = null;
+            
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                libraryPath = Path.Combine(searchDir, $"{libraryName}.dll");
+                if (!File.Exists(libraryPath))
+                    libraryPath = Path.Combine(searchDir, libraryName);
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                libraryPath = Path.Combine(searchDir, $"lib{libraryName}.so");
+                if (!File.Exists(libraryPath))
+                    libraryPath = Path.Combine(searchDir, libraryName);
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                libraryPath = Path.Combine(searchDir, $"lib{libraryName}.dylib");
+                if (!File.Exists(libraryPath))
+                    libraryPath = Path.Combine(searchDir, libraryName);
+            }
+            
+            if (libraryPath != null && File.Exists(libraryPath))
+            {
+                GD.Print($"Loading native library: {libraryPath}");
+                if (NativeLibrary.TryLoad(libraryPath, out IntPtr handle))
+                {
+                    return handle;
+                }
+            }
+        }
+        
+        // Fallback to default behavior
+        return IntPtr.Zero;
+    }
 }

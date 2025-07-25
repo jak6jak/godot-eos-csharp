@@ -9,6 +9,10 @@
     <DefineConstants Condition="$([MSBuild]::IsOSPlatform('Windows'))">$(DefineConstants);EOS_PLATFORM_WINDOWS_64;PLATFORM_WIN64</DefineConstants>
     <DefineConstants Condition="$([MSBuild]::IsOSPlatform('Linux'))">$(DefineConstants);EOS_PLATFORM_LINUX;PLATFORM_POSIX</DefineConstants>
     <ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>None</ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
+    <RestoreAdditionalProjectSources />
+    <RestoreAdditionalProjectFallbackFolders />
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <NuGetLockFile>packages.lock.json</NuGetLockFile>
   </PropertyGroup>
   <!-- Include EOS SDK Source Files -->
   <ItemGroup>
@@ -104,9 +108,6 @@
   </ItemGroup>
   <!-- Configuration Files -->
   <ItemGroup>
-    <Content Include="EOSconfig.cfg">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
     <Content Include="EOSPluign.runtimeconfig.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

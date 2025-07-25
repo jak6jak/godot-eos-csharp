@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="EOSPluign"
-run/main_scene="res://Test.tscn"
+run/main_scene="uid://dtx3ol65i11qx"
 config/features=PackedStringArray("4.4", "C#", "Mobile")
 config/icon="res://icon.svg"
 
