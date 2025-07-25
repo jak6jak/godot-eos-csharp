@@ -11,7 +11,7 @@ public partial class MainMenu : Control
         loginButton.Pressed += () =>
         {
             GD.Print("Login button pressed");
-            EOSInterfaceManager.Instance.AuthService.SmartLogin();
+            EOSInterfaceManager.Instance.ConnectService.Login();
         };
     }
 }

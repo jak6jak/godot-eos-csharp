@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://dtx3ol65i11qx"]
+[gd_scene load_steps=3 format=3 uid="uid://dtx3ol65i11qx"]
 
 [ext_resource type="Script" uid="uid://cyyly4qvk4jfu" path="res://MainMenu.cs" id="1_i26rj"]
+[ext_resource type="PackedScene" uid="uid://can87lkwq21aj" path="res://account_choice_panel.tscn" id="2_eiy7p"]
 
 [node name="Control" type="Control"]
 layout_mode = 3
@@ -25,3 +26,8 @@ offset_bottom = 4.0
 grow_horizontal = 2
 grow_vertical = 2
 text = "Login"
+
+[node name="AccountChoicePanel" parent="." instance=ExtResource("2_eiy7p")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1

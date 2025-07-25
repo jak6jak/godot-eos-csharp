@@ -16,6 +16,7 @@ public partial class EOSInterfaceManager : Node
     public bool IsInitialized { get; private set; }
     public PlatformInterface Platform {private set; get;}
     public AuthService AuthService { private set; get; }
+    public ConnectService ConnectService { private set; get; }
     public EOSConfiguration Configuration { private set; get; }
     private double  PlatformTickTimer { get; set; }
     private double PlatformTickInterval { get; set; } = 0.1f;
@@ -74,6 +75,8 @@ public partial class EOSInterfaceManager : Node
         }
         AuthService = new AuthService();
         AuthService.Initialize(this);
+        ConnectService = new ConnectService();
+        ConnectService.Initialize(this);
     }
     
     public override void _PhysicsProcess(double delta) {
