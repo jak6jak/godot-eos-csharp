@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using Epic.OnlineServices;
 using Epic.OnlineServices.Auth;
 using Godot;
@@ -286,7 +287,7 @@ public partial class AuthService : BaseEOSService
         }else if (EOSConfiguration.ConfigFields[EOSConfiguration.RequiredConfigFields.DefaultCredentialType] ==
                   "ExternalAuth")
         {
-            LoginWithSteamIfAvailable();
+            LoginWithSteam();
         }
         
         
@@ -311,27 +312,58 @@ public partial class AuthService : BaseEOSService
     }
 
     /// <summary>
+    /// Attempts to login with Steam (public convenience method)
+    /// </summary>
+    public async void LoginWithSteam()
+    {
+        await LoginWithSteamAsync();
+    }
+    
+    /// <summary>
     /// Attempts to login with Steam if Steam is available
     /// </summary>
-    public void LoginWithSteamIfAvailable()
+    public async Task LoginWithSteamAsync()
     {
         if (!EnsureInitialized("Steam login"))
             return;
             
-        // This would need to be implemented based on your Steam integration
-        // For now, just show that the structure is in place
-        EmitWarning("Steam integration not yet implemented");
-        
-        // Example of what this might look like:
-        // var steamTicket = GetSteamSessionTicket();
-        // if (!string.IsNullOrEmpty(steamTicket))
-        // {
-        //     LoginWithExternalAuth(ExternalCredentialType.SteamSessionTicket, steamTicket);
-        // }
-        // else
-        // {
-        //     EmitError("Failed to get Steam session ticket");
-        // }
+        try
+        {
+            GD.Print("Attempting Steam login...");
+            
+            // Get Steam session ticket through ConnectService
+            var connectService = Manager?.ConnectService;
+            if (connectService == null)
+            {
+                EmitError("ConnectService not available for Steam login");
+                return;
+            }
+            
+            // Check if Steam is available before attempting login
+            if (!connectService.IsSteamAvailable())
+            {
+                EmitError("Steam is not running or user is not logged into Steam");
+                EmitSignal(SignalName.LoginFailed, "SteamNotAvailable", "Steam is not running or user is not logged in");
+                return;
+            }
+            
+            var steamTicket = await connectService.GetSteamSessionTicketAsync();
+            if (!string.IsNullOrEmpty(steamTicket))
+            {
+                GD.Print("Steam session ticket obtained, attempting EOS login...");
+                LoginWithExternalAuth(ExternalCredentialType.SteamSessionTicket, steamTicket);
+            }
+            else
+            {
+                EmitError("Failed to get Steam session ticket");
+                EmitSignal(SignalName.LoginFailed, "SteamTicketFailed", "Could not obtain Steam session ticket");
+            }
+        }
+        catch (Exception ex)
+        {
+            EmitError($"Steam login failed with exception: {ex.Message}");
+            EmitSignal(SignalName.LoginFailed, "SteamException", ex.Message);
+        }
     }
     private string ExtractExchangeCodeFromArgs(string[] args)
     {

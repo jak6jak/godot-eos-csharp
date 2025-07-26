@@ -22,6 +22,9 @@
         "dependencies": {
           "GodotSharp": "4.4.1"
         }
+      },
+      "facepunch.steamworks.posix": {
+        "type": "Project"
       }
     }
   }

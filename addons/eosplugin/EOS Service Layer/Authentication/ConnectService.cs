@@ -165,7 +165,7 @@ public partial class ConnectService : BaseEOSService
         CurrentLoginType = ExternalCredentialType.SteamSessionTicket;
         try
         {
-            string steamSessionTicket = await GetSteamSessionTicket();
+            string steamSessionTicket = await GetSteamSessionTicketAsync();
             if (string.IsNullOrEmpty(steamSessionTicket))
             {
                 EmitError("Could not get Steam Session Ticket");
@@ -310,19 +310,62 @@ public partial class ConnectService : BaseEOSService
         _connectInterface.Login(ref loginOptions, null, OnLoginComplete);
     }
 
-    private async Task<string> GetSteamSessionTicket()
+    /// <summary>
+    /// Checks if Steam is available on the system
+    /// </summary>
+    public bool IsSteamAvailable()
     {
         try
         {
-            // Initialize Steam if not already initialized
+            return InitializeSteam() && SteamClient.IsValid && SteamClient.IsLoggedOn;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+    
+    /// <summary>
+    /// Initializes Steam client if not already initialized
+    /// </summary>
+    public bool InitializeSteam()
+    {
+        try
+        {
             if (!SteamClient.IsValid)
             {
+                GD.Print($"Initializing Steam with AppId: {SteamAppId}");
                 SteamClient.Init(uint.Parse(SteamAppId), true);
+                
+                if (SteamClient.IsValid)
+                {
+                    GD.Print("Steam client initialized successfully");
+                    return true;
+                }
+                else
+                {
+                    GD.PushError("Steam client initialization failed - Steam may not be running");
+                    return false;
+                }
+            }
+            else
+            {
+                GD.Print("Steam client already initialized");
+                return true;
             }
         }
         catch (Exception e)
         {
             GD.PushError($"Failed to initialize SteamClient: {e.Message}");
+            return false;
+        }
+    }
+    
+    public async Task<string> GetSteamSessionTicketAsync()
+    {
+        // Initialize Steam if not already initialized
+        if (!InitializeSteam())
+        {
             return "";
         }
 
