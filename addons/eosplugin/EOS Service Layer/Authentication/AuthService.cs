@@ -283,6 +283,10 @@ public partial class AuthService : BaseEOSService
                   "AccountPortal")
         {
             LoginWithAccountPortal();
+        }else if (EOSConfiguration.ConfigFields[EOSConfiguration.RequiredConfigFields.DefaultCredentialType] ==
+                  "ExternalAuth")
+        {
+            LoginWithSteamIfAvailable();
         }
         
         
