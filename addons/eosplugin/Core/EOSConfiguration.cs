@@ -13,6 +13,7 @@ public class EOSConfiguration
         ProductName,
         ProductVersion,
         DefaultCredentialType,
+        DefaultExternalCredentialType,
         EosProductId,
         EosSandboxId,
         EosDeploymentId,
@@ -20,7 +21,6 @@ public class EOSConfiguration
         EosClientSecret,
             
     }
-
     public enum OptionalConfigFields
     {
         DevAuthPort,
