@@ -8,6 +8,7 @@ using Epic;
 using System.Runtime.InteropServices;
 using System.IO;
 using System.Reflection;
+
 namespace EOSPluign.addons.eosplugin;
 
 public partial class EOSInterfaceManager : Node
@@ -77,6 +78,8 @@ public partial class EOSInterfaceManager : Node
         AuthService.Initialize(this);
         ConnectService = new ConnectService();
         ConnectService.Initialize(this);
+        //PeerService = new EOSPeer();
+        //ConnectService.Initialize(this);
     }
     
     public override void _PhysicsProcess(double delta) {

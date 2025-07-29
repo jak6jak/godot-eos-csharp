@@ -23,8 +23,11 @@
           "GodotSharp": "4.4.1"
         }
       },
-      "facepunch.steamworks.posix": {
-        "type": "Project"
+      "RiptideNetworking.Riptide": {
+        "type": "Direct",
+        "requested": "[2.2.1, )",
+        "resolved": "2.2.1",
+        "contentHash": "hTswUBlFzxxmX5BjX3rlSr2pcCmsFfR7Q9iTZThdwnT1ZysVUjLJzpklHvXnGpkr3qypqv7JecYyFeXQ2U/LuQ=="
       }
     }
   }

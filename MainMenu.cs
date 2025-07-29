@@ -4,6 +4,8 @@ using EOSPluign.addons.eosplugin;
 using Epic.OnlineServices;
 using Epic.OnlineServices.Auth;
 using Epic.OnlineServices.UserInfo;
+using Riptide;
+using Riptide.Transports.EOS;
 
 public partial class MainMenu : Control
 {
@@ -17,6 +19,16 @@ public partial class MainMenu : Control
         {
             GD.Print("Login button pressed");
             EOSInterfaceManager.Instance.AuthService.SmartLogin();
+            EOSInterfaceManager.Instance.ConnectService.Login();
+
+            var eosServer = new EOSServer();
+            var server = new Server(eosServer);
+            server.Start(7777,10);
+            
+            var eosClient = new EOSClient(eosServer);
+            var client = new Client(eosClient);
+            client.Connect("127.0.0.1", 7);
+
         };
         EOSInterfaceManager.Instance.AuthService.LoginSucceeded += AuthServiceOnLoginSucceeded;
     }

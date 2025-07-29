@@ -113,6 +113,9 @@
     </Content>
     <Content Include="steam_appid.txt" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="RiptideNetworking.Riptide" Version="2.2.1" />
+  </ItemGroup>
 
   <!-- Build targets to ensure native libraries are properly referenced -->
   <Target Name="SetNativeLibraryPath" BeforeTargets="Build">
