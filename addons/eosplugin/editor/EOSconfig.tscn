@@ -1,0 +1,15 @@
+[gd_scene load_steps=3 format=3 uid="uid://dev58dacliygm"]
+
+[ext_resource type="Theme" uid="uid://cy3nxeeqpon41" path="res://addons/eosplugin/editor/Base_GUI_theme.tres" id="1_l3f3t"]
+[ext_resource type="Script" uid="uid://52wakoppidm7" path="res://addons/eosplugin/editor/EosConfigMenu.cs" id="2_4b1kv"]
+
+[node name="Control" type="Panel"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme = ExtResource("1_l3f3t")
+script = ExtResource("2_4b1kv")

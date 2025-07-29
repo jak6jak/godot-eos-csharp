@@ -277,15 +277,13 @@ public partial class AuthService : BaseEOSService
         
         // Fallback to persistent auth
         GD.Print("No exchange code found, attempting AccountPortal login...");
-        if (EOSConfiguration.ConfigFields[EOSConfiguration.RequiredConfigFields.DefaultCredentialType] == "Developer")
+        if (EOSConfiguration.Instance.DefaultCredentialType == LoginCredentialType.Developer)
         {
             LoginWithDevPortal();
-        }else if (EOSConfiguration.ConfigFields[EOSConfiguration.RequiredConfigFields.DefaultCredentialType] ==
-                  "AccountPortal")
+        }else if (EOSConfiguration.Instance.DefaultCredentialType == LoginCredentialType.AccountPortal)
         {
             LoginWithAccountPortal();
-        }else if (EOSConfiguration.ConfigFields[EOSConfiguration.RequiredConfigFields.DefaultCredentialType] ==
-                  "ExternalAuth")
+        }else if (EOSConfiguration.Instance.DefaultCredentialType == LoginCredentialType.ExternalAuth)
         {
             LoginWithSteam();
         }

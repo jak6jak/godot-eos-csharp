@@ -88,14 +88,8 @@ public partial class ConnectService : BaseEOSService
             EmitWarning("Login already in progress");
             return;
         }
-        
-        bool successConvert = Enum.TryParse(EOSConfiguration.ConfigFields[EOSConfiguration.RequiredConfigFields.DefaultExternalCredentialType],true,out CurrentLoginType);
-        if (!successConvert)
-        {
-            GD.PrintErr("Cannot parse default external credential type. Defaulting to EpicIDToken.");
-            CurrentLoginType = ExternalCredentialType.SteamSessionTicket;
-        }
-        
+
+        CurrentLoginType = EOSConfiguration.Instance.DefaultExternalCredentialType;
         switch (CurrentLoginType)
         {
            case ExternalCredentialType.SteamSessionTicket:
