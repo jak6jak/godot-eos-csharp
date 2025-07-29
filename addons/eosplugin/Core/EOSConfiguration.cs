@@ -63,29 +63,7 @@ public class EOSConfiguration
 
     // Static instance for global access
     public static EOSConfiguration Instance { get; private set; } = new EOSConfiguration();
-
-    // Legacy dictionary for backward compatibility
-    //public static Dictionary<RequiredConfigFields, string> ConfigFields { get; private set; } = new Dictionary<RequiredConfigFields, string>();
-
-    // Legacy enums for backward compatibility
-    public enum RequiredConfigFields
-    {
-        ProductName,
-        ProductVersion,
-        DefaultCredentialType,
-        EosProductId,
-        EosSandboxId,
-        EosDeploymentId,
-        EosClientId,
-        EosClientSecret,
-    }
-
-    public enum OptionalConfigFields
-    {
-        DevAuthPort,
-        DevAuthToken,
-    }
-
+    
     private const string CONFIG_PATH = "res://EOSconfig.cfg";
     private static ConfigFile _configFile;
     private static string sectionID = "EOS";

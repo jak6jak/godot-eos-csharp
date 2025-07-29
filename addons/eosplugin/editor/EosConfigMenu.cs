@@ -21,6 +21,9 @@ public partial class EosConfigMenu : Panel
     // Store references to input controls for easy access
     private Dictionary<string, Control> _inputControls = new Dictionary<string, Control>();
     
+    // Store references to field containers for conditional visibility
+    private Dictionary<string, Control> _fieldContainers = new Dictionary<string, Control>();
+    
     [Signal]
     public delegate void ConfigurationSavedEventHandler();
     
@@ -194,7 +197,16 @@ public partial class EosConfigMenu : Panel
             inputControl.CustomMinimumSize = new Vector2(250, 0);
             fieldContainer.AddChild(inputControl);
             _inputControls[property.Name] = inputControl;
+            
+            // Connect change event for DefaultCredentialType to handle conditional visibility
+            if (property.Name == "DefaultCredentialType" && inputControl is OptionButton optionButton)
+            {
+                optionButton.ItemSelected += OnDefaultCredentialTypeChanged;
+            }
         }
+        
+        // Store reference to field container for conditional visibility
+        _fieldContainers[property.Name] = fieldContainer;
         
         // Add small spacer after each field
         var fieldSpacer = new Control();
@@ -324,6 +336,9 @@ public partial class EosConfigMenu : Panel
             
             SetControlValue(control, value, property.PropertyType);
         }
+        
+        // Update conditional visibility after loading values
+        UpdateConditionalVisibility();
     }
 
     private void UpdateConfigurationFromUI()
@@ -426,6 +441,40 @@ public partial class EosConfigMenu : Panel
         styleBox.BorderColor = Colors.Orange;
         styleBox.SetContentMarginAll(5);
         return styleBox;
+    }
+
+    private void OnDefaultCredentialTypeChanged(long index)
+    {
+        GD.Print($"DefaultCredentialType changed to index: {index}");
+        UpdateConditionalVisibility();
+    }
+
+    private void UpdateConditionalVisibility()
+    {
+        // Get the current DefaultCredentialType value
+        if (!_inputControls.ContainsKey("DefaultCredentialType"))
+            return;
+
+        var credentialTypeControl = _inputControls["DefaultCredentialType"] as OptionButton;
+        if (credentialTypeControl == null)
+            return;
+
+        // Get the selected credential type name
+        var selectedIndex = credentialTypeControl.Selected;
+        if (selectedIndex < 0 || selectedIndex >= credentialTypeControl.ItemCount)
+            return;
+
+        var selectedCredentialType = credentialTypeControl.GetItemText(selectedIndex);
+        bool isExternalAuth = selectedCredentialType == "ExternalAuth";
+
+        // Show/hide DefaultExternalCredentialType field
+        if (_fieldContainers.ContainsKey("DefaultExternalCredentialType"))
+        {
+            var externalCredContainer = _fieldContainers["DefaultExternalCredentialType"];
+            externalCredContainer.Visible = isExternalAuth;
+            
+            GD.Print($"DefaultExternalCredentialType visibility set to: {isExternalAuth}");
+        }
     }
     
 }
