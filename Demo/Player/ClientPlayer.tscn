@@ -1,0 +1,22 @@
+[gd_scene load_steps=5 format=3 uid="uid://bycreiiapi6op"]
+
+[ext_resource type="Script" uid="uid://bhxqasb21c4au" path="res://Demo/Player/ClientPlayer.cs" id="1_hp68e"]
+[ext_resource type="Script" uid="uid://qoi5yiqy1tik" path="res://Demo/Player/PlayerUIManager.cs" id="2_uls37"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_uls37"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_hp68e"]
+
+[node name="Node3D" type="CharacterBody3D"]
+script = ExtResource("1_hp68e")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("CapsuleShape3D_uls37")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("CapsuleMesh_hp68e")
+
+[node name="Label3D" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.15165, 0)
+text = "Testing 123"
+script = ExtResource("2_uls37")

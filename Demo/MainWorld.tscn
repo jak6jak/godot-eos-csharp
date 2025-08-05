@@ -1,0 +1,12 @@
+[gd_scene load_steps=5 format=3 uid="uid://cdh6jbr11x6yh"]
+
+[ext_resource type="Script" uid="uid://ccukqfwycu1wm" path="res://Demo/NetworkManager.cs" id="1_h74fk"]
+[ext_resource type="PackedScene" uid="uid://buituc877x8o0" path="res://Demo/Player/ServerPlayer.tscn" id="2_qrecs"]
+[ext_resource type="PackedScene" uid="uid://bycreiiapi6op" path="res://Demo/Player/ClientPlayer.tscn" id="3_ektun"]
+[ext_resource type="PackedScene" uid="uid://dddb8tmya0f6" path="res://Demo/Player/LocalPlayer.tscn" id="4_25kcw"]
+
+[node name="Node3D" type="Node3D"]
+script = ExtResource("1_h74fk")
+serverPlayerPrefab = ExtResource("2_qrecs")
+playerPrefab = ExtResource("3_ektun")
+localPlayerPrefab = ExtResource("4_25kcw")
