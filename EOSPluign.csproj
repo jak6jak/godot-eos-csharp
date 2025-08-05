@@ -32,7 +32,7 @@
 
   <!-- Include main project files -->
   <ItemGroup>
-    <Compile Include="**/*.cs" Exclude="bin/**;obj/**;addons/eosplugin/thirdparty/**/*.Test.cs;addons/eosplugin/thirdparty/**/*Tests.cs;addons/eosplugin/thirdparty/Facepunch.Steamworks/Facepunch.Steamworks.Test/**/*.cs;addons/eosplugin/thirdparty/Facepunch.Steamworks/Generator/**/*.cs;addons/eosplugin/thirdparty/Facepunch.Steamworks/**/obj/**/*.cs;addons/eosplugin/thirdparty/Facepunch.Steamworks/**/bin/**/*.cs" />
+    <Compile Include="**/*.cs" Exclude="bin/**;obj/**;**/Test*/**;**/Generator/**;Steam/Facepunch.Steamworks/Facepunch.Steamworks.Test/**;Steam/Facepunch.Steamworks/Generator/**" />
   </ItemGroup>
   
   <!-- Windows Native Libraries - Plugin Path -->
@@ -92,17 +92,6 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <Link>addons/eosplugin/libsteam_api.so</Link>
     </None>
-  </ItemGroup>
-
-  <!-- Exclude unwanted Steam files -->
-  <ItemGroup>
-    <!-- Exclude test files and other unnecessary files from Facepunch.Steamworks -->
-    <Compile Remove="addons/eosplugin/thirdparty/Facepunch.Steamworks/**/*Test.cs" />
-    <Compile Remove="addons/eosplugin/thirdparty/Facepunch.Steamworks/**/*Tests.cs" />
-    <Compile Remove="addons/eosplugin/thirdparty/Facepunch.Steamworks/Facepunch.Steamworks.Test/**/*.cs" />
-    <Compile Remove="addons/eosplugin/thirdparty/Facepunch.Steamworks/Generator/**/*.cs" />
-    <Compile Remove="addons/eosplugin/thirdparty/Facepunch.Steamworks/**/obj/**/*.cs" />
-    <Compile Remove="addons/eosplugin/thirdparty/Facepunch.Steamworks/**/bin/**/*.cs" />
   </ItemGroup>
 
   <!-- Configuration Files -->
