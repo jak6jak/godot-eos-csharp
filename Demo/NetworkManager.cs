@@ -53,34 +53,58 @@ namespace Riptide.Demos.Steam.PlayerHosted
         {
             Singleton = this;
             
+            // Add to group for fallback discovery
+            AddToGroup("NetworkManager");
+            
             // Make this node persistent across scene changes
             SetProcessMode(ProcessModeEnum.Always);
             
+            // Start EOS login process
+            StartEOSLogin();
+            
             InitializeNetworking();
+        }
+        
+        private void StartEOSLogin()
+        {
+            // Ensure EOS is ready and attempt login
+            var eosManager = EOSPluign.addons.eosplugin.EOSInterfaceManager.Instance;
+            if (eosManager != null)
+            {
+                GD.Print("Starting EOS authentication...");
+                eosManager.AuthService?.SmartLogin();
+                eosManager.ConnectService?.Login();
+            }
+            else
+            {
+                GD.PrintErr("EOS Interface Manager not found!");
+            }
         }
 
         private void InitializeNetworking()
         {
-            // Check if Steam is initialized - you'll need to adapt this to your Steam integration
-            if (!IsSteamInitialized())
+            // Wait for EOS to be initialized
+            if (!IsEOSInitialized())
             {
-                GD.PrintErr("Steam is not initialized!");
+                GD.PrintErr("EOS is not initialized! Waiting...");
+                // Retry initialization after a delay
+                GetTree().CreateTimer(1.0).Timeout += InitializeNetworking;
                 return;
             }
 
             // Initialize Riptide logger for Godot
             RiptideLogger.Initialize(GD.Print, GD.Print, GD.PrintErr, GD.PrintErr, false);
 
-            EOSServer steamServer = new EOSServer();
-            Server = new Server(steamServer);
+            EOSServer eosServer = new EOSServer();
+            Server = new Server(eosServer);
             Server.ClientConnected += NewPlayerConnected;
             Server.ClientDisconnected += ServerPlayerLeft;
 
-            Client = new Client(new EOSClient(steamServer));
+            Client = new Client(new EOSClient(eosServer));
             Client.Connected += DidConnect;
             Client.ConnectionFailed += FailedToConnect;
             Client.ClientDisconnected += ClientPlayerLeft;
-            Client.Disconnected += DidDisconnect;
+            Client.Disconnected += DidDisconnected;
         }
 
         public override void _PhysicsProcess(double delta)
@@ -111,34 +135,58 @@ namespace Riptide.Demos.Steam.PlayerHosted
                 Client.Connected -= DidConnect;
                 Client.ConnectionFailed -= FailedToConnect;
                 Client.ClientDisconnected -= ClientPlayerLeft;
-                Client.Disconnected -= DidDisconnect;
+                Client.Disconnected -= DidDisconnected;
             }
         }
 
-        internal void StopServer()
+        public void StopServer()
         {
-            Server?.Stop();
-            
-            // Clean up all server players
-            foreach (ServerPlayer player in ServerPlayer.List.Values)
+            if (Server != null && Server.IsRunning)
             {
-                if (IsInstanceValid(player))
-                    player.QueueFree();
+                GD.Print("NetworkManager: Stopping server...");
+                
+                // Disconnect all clients gracefully
+                Server.Stop();
+                
+                // Clean up all server players
+                foreach (ServerPlayer player in ServerPlayer.List.Values)
+                {
+                    if (IsInstanceValid(player))
+                        player.QueueFree();
+                }
+                ServerPlayer.List.Clear();
+                
+                GD.Print("NetworkManager: Server stopped successfully");
+                EmitSignal(SignalName.ServerStopped);
             }
-            ServerPlayer.List.Clear();
+            else
+            {
+                GD.Print("NetworkManager: Server was not running");
+            }
         }
 
-        internal void DisconnectClient()
+        public void DisconnectClient()
         {
-            Client?.Disconnect();
-            
-            // Clean up all client players
-            foreach (EOSPluign.Demo.Player.ClientPlayer player in EOSPluign.Demo.Player.ClientPlayer.list.Values)
+            if (Client != null && Client.IsConnected)
             {
-                if (IsInstanceValid(player))
-                    player.QueueFree();
+                GD.Print("NetworkManager: Disconnecting client...");
+                
+                Client.Disconnect();
+                
+                // Clean up all client players
+                foreach (EOSPluign.Demo.Player.ClientPlayer player in EOSPluign.Demo.Player.ClientPlayer.list.Values)
+                {
+                    if (IsInstanceValid(player))
+                        player.QueueFree();
+                }
+                EOSPluign.Demo.Player.ClientPlayer.list.Clear();
+                
+                GD.Print("NetworkManager: Client disconnected successfully");
             }
-            EOSPluign.Demo.Player.ClientPlayer.list.Clear();
+            else
+            {
+                GD.Print("NetworkManager: Client was not connected");
+            }
         }
 
         private void NewPlayerConnected(object sender, ServerConnectedEventArgs e)
@@ -162,8 +210,9 @@ namespace Riptide.Demos.Steam.PlayerHosted
 
         private void DidConnect(object sender, EventArgs e)
         {
+            GD.Print("Client: Successfully connected to server!");
             Message message = Message.Create(MessageSendMode.Reliable, ClientToServerId.PlayerName);
-            message.AddString(GetSteamPersonaName()); // You'll need to implement this
+            message.AddString(GetPlayerName());
             Client.Send(message);
         }
 
@@ -183,8 +232,10 @@ namespace Riptide.Demos.Steam.PlayerHosted
             }
         }
 
-        private void DidDisconnect(object sender, EventArgs e)
+        private void DidDisconnected(object sender, DisconnectedEventArgs e)
         {
+            GD.Print($"Client: Disconnected from server - Reason: {e.Reason}");
+            
             foreach (EOSPluign.Demo.Player.ClientPlayer player in EOSPluign.Demo.Player.ClientPlayer.list.Values)
             {
                 if (IsInstanceValid(player))
@@ -197,19 +248,23 @@ namespace Riptide.Demos.Steam.PlayerHosted
             EmitSignal(SignalName.Disconnected);
         }
 
-        // Helper methods - you'll need to implement these based on your Steam integration
-        private bool IsSteamInitialized()
+        // Helper methods for EOS integration
+        private bool IsEOSInitialized()
         {
-            // Implement your Steam initialization check here
-            // For example, if using Steamworks.NET: return SteamManager.Initialized;
-            return true; // Placeholder
+            return EOSPluign.addons.eosplugin.EOSInterfaceManager.Instance != null && 
+                   EOSPluign.addons.eosplugin.EOSInterfaceManager.Instance.Platform != null;
         }
 
-        private string GetSteamPersonaName()
+        private string GetPlayerName()
         {
-            // Implement getting Steam persona name here
-            // For example: return Steamworks.SteamFriends.GetPersonaName();
-            return "Player"; // Placeholder
+            // Try to get EOS user display name, fallback to default
+            var authService = EOSPluign.addons.eosplugin.EOSInterfaceManager.Instance?.AuthService;
+            if (authService != null && authService.IsLoggedIn())
+            {
+                // You might want to implement getting display name from EOS
+                return "EOS Player";
+            }
+            return "Guest Player";
         }
 
         // Godot signals for UI communication
@@ -224,5 +279,37 @@ namespace Riptide.Demos.Steam.PlayerHosted
         
         [Signal]
         public delegate void ServerStoppedEventHandler();
+        
+        // Public methods for controlling server/client
+        public void StartServer(ushort port = 7777, ushort maxClients = 10)
+        {
+            if (!IsEOSInitialized())
+            {
+                GD.PrintErr("Cannot start server: EOS not initialized");
+                return;
+            }
+            
+            if (!Server.IsRunning)
+            {
+                Server.Start(port, maxClients);
+                GD.Print($"Server started on port {port}");
+                EmitSignal(SignalName.ServerStarted);
+            }
+        }
+        
+        public void ConnectToServer(string address = "127.0.0.1", ushort port = 7777)
+        {
+            if (!IsEOSInitialized())
+            {
+                GD.PrintErr("Cannot connect: EOS not initialized");
+                return;
+            }
+            
+            if (!Client.IsConnected)
+            {
+                Client.Connect(address, port);
+                GD.Print($"Attempting to connect to {address}:{port}");
+            }
+        }
     }
 }

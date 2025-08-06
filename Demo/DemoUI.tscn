@@ -1,0 +1,126 @@
+[gd_scene load_steps=2 format=3 uid="uid://bj3xpxpqviwfh"]
+
+[ext_resource type="Script" path="res://Demo/DemoUI.cs" id="1_x6y3m"]
+
+[node name="DemoUI" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_x6y3m")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -150.0
+offset_top = -200.0
+offset_right = 150.0
+offset_bottom = 200.0
+
+[node name="Title" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "EOS Multiplayer Demo"
+horizontal_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="StatusLabel" type="Label" parent="VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Initializing..."
+horizontal_alignment = 1
+
+[node name="HSeparator2" type="HSeparator" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="ConnectionSettings" type="VBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBoxContainer/ConnectionSettings"]
+layout_mode = 2
+text = "Connection Settings"
+horizontal_alignment = 1
+
+[node name="IPContainer" type="HBoxContainer" parent="VBoxContainer/ConnectionSettings"]
+layout_mode = 2
+
+[node name="IPLabel" type="Label" parent="VBoxContainer/ConnectionSettings/IPContainer"]
+layout_mode = 2
+text = "IP Address:"
+
+[node name="IPAddressInput" type="LineEdit" parent="VBoxContainer/ConnectionSettings/IPContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "127.0.0.1"
+
+[node name="PortContainer" type="HBoxContainer" parent="VBoxContainer/ConnectionSettings"]
+layout_mode = 2
+
+[node name="PortLabel" type="Label" parent="VBoxContainer/ConnectionSettings/PortContainer"]
+layout_mode = 2
+text = "Port:"
+
+[node name="PortInput" type="LineEdit" parent="VBoxContainer/ConnectionSettings/PortContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "7777"
+
+[node name="HSeparator3" type="HSeparator" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="ServerControls" type="VBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="Label2" type="Label" parent="VBoxContainer/ServerControls"]
+layout_mode = 2
+text = "Server Controls"
+horizontal_alignment = 1
+
+[node name="StartServerButton" type="Button" parent="VBoxContainer/ServerControls"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Start Server"
+
+[node name="StopServerButton" type="Button" parent="VBoxContainer/ServerControls"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Stop Server"
+
+[node name="HSeparator4" type="HSeparator" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="ClientControls" type="VBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="Label3" type="Label" parent="VBoxContainer/ClientControls"]
+layout_mode = 2
+text = "Client Controls"
+horizontal_alignment = 1
+
+[node name="ConnectClientButton" type="Button" parent="VBoxContainer/ClientControls"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Connect to Server"
+
+[node name="DisconnectClientButton" type="Button" parent="VBoxContainer/ClientControls"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Disconnect"
+
+[node name="HSeparator5" type="HSeparator" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="Instructions" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "Instructions:
+1. Start server first
+2. Connect client (same or different instance)
+3. Use WASD to move, Space to jump"
+horizontal_alignment = 1

@@ -1,12 +1,35 @@
-[gd_scene load_steps=5 format=3 uid="uid://cdh6jbr11x6yh"]
+[gd_scene load_steps=8 format=3 uid="uid://cdh6jbr11x6yh"]
 
 [ext_resource type="Script" uid="uid://ccukqfwycu1wm" path="res://Demo/NetworkManager.cs" id="1_h74fk"]
 [ext_resource type="PackedScene" uid="uid://buituc877x8o0" path="res://Demo/Player/ServerPlayer.tscn" id="2_qrecs"]
 [ext_resource type="PackedScene" uid="uid://bycreiiapi6op" path="res://Demo/Player/ClientPlayer.tscn" id="3_ektun"]
 [ext_resource type="PackedScene" uid="uid://dddb8tmya0f6" path="res://Demo/Player/LocalPlayer.tscn" id="4_25kcw"]
+[ext_resource type="PackedScene" path="res://Demo/DemoUI.tscn" id="5_demo"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_123"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_qrecs"]
+size = Vector3(19.7421, 1.35059, 20.2114)
 
 [node name="Node3D" type="Node3D"]
 script = ExtResource("1_h74fk")
 serverPlayerPrefab = ExtResource("2_qrecs")
 playerPrefab = ExtResource("3_ektun")
 localPlayerPrefab = ExtResource("4_25kcw")
+
+[node name="Ground" type="StaticBody3D" parent="."]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Ground"]
+transform = Transform3D(20, 0, 0, 0, 1, 0, 0, 0, 20, 0, 0, 0)
+mesh = SubResource("BoxMesh_123")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0917358, -0.175293, -0.0638123)
+shape = SubResource("BoxShape3D_qrecs")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.707107, 0.707107, 0, -0.707107, 0.707107, 0, 10, 10)
+
+[node name="DemoUI" parent="." instance=ExtResource("5_demo")]
+grow_horizontal = 2
+grow_vertical = 2

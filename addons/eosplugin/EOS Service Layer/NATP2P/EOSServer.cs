@@ -15,7 +15,8 @@ namespace Riptide.Transports.EOS
 
         public void Shutdown()
         {
-            throw new NotImplementedException();
+            GD.Print($"{LogName}: Shutdown requested - calling Stop()");
+            Stop();
         }
 
         public ushort Port { get; private set; }
