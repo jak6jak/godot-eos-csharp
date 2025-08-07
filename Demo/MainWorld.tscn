@@ -4,7 +4,7 @@
 [ext_resource type="PackedScene" uid="uid://buituc877x8o0" path="res://Demo/Player/ServerPlayer.tscn" id="2_qrecs"]
 [ext_resource type="PackedScene" uid="uid://bycreiiapi6op" path="res://Demo/Player/ClientPlayer.tscn" id="3_ektun"]
 [ext_resource type="PackedScene" uid="uid://dddb8tmya0f6" path="res://Demo/Player/LocalPlayer.tscn" id="4_25kcw"]
-[ext_resource type="PackedScene" path="res://Demo/DemoUI.tscn" id="5_demo"]
+[ext_resource type="PackedScene" uid="uid://bj3xpxpqviwfh" path="res://Demo/DemoUI.tscn" id="5_demo"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_123"]
 

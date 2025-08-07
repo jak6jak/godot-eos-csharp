@@ -99,7 +99,7 @@ public partial class Eosplugin : EditorPlugin
         
         _configWindow.AddChild(configControl);
         
-        GetEditorInterface().GetBaseControl().AddChild(_configWindow);
+        EditorInterface.Singleton.GetBaseControl().AddChild(_configWindow);
         _configWindow.PopupCentered();
         
         GD.Print("EOS Plugin: Configuration window opened with scene");

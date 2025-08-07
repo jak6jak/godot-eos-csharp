@@ -7,25 +7,36 @@ using Godot;
 
 namespace Riptide.Transports.EOS
 {
+    /// <summary>
+    /// EOS P2P server transport for Riptide networking
+    /// </summary>
     public class EOSServer : EOSPeer, IServer
     {
+        #region Events (Required by IServer)
         public event EventHandler<ConnectedEventArgs> Connected;
         public event EventHandler<DataReceivedEventArgs> DataReceived;
         public event EventHandler<DisconnectedEventArgs> Disconnected;
+        #endregion
 
-        public void Shutdown()
-        {
-            GD.Print($"{LogName}: Shutdown requested - calling Stop()");
-            Stop();
-        }
-
+        #region Properties (Required by IServer)
         public ushort Port { get; private set; }
+        #endregion
 
-        private Dictionary<string, EOSConnection> connections;
+        private Dictionary<string, EOSConnection> connections = new Dictionary<string, EOSConnection>();
         private ProductUserId localUserId;
         private ulong connectionRequestNotification;
         private ulong connectionClosedNotification;
-        private ulong incomingConnectionNotification;
+
+        /// <summary>
+        /// Adds a connection to the server (used for localhost connections)
+        /// </summary>
+        internal void AddConnection(EOSConnection connection)
+        {
+            string userIdString = connection.RemoteUserId.ToString();
+            connections[userIdString] = connection;
+            GD.Print($"{LogName}: Added connection {userIdString}");
+            OnConnected(connection);
+        }
 
         public void Start(ushort port)
         {
@@ -74,22 +85,12 @@ namespace Riptide.Transports.EOS
             connectionClosedNotification = p2pInterface.AddNotifyPeerConnectionClosed(ref addNotifyClosedOptions, null, OnConnectionClosed);
             GD.Print($"{LogName}: Connection closed notification ID: {connectionClosedNotification}");
 
-            // Set up incoming connection notifications
-            GD.Print($"{LogName}: Setting up incoming connection notifications...");
-            var addNotifyIncomingOptions = new AddNotifyPeerConnectionRequestOptions()
-            {
-                LocalUserId = localUserId,
-                SocketId = new SocketId() { SocketName = "RiptideSocket" }
-            };
-
-            incomingConnectionNotification = p2pInterface.AddNotifyPeerConnectionRequest(ref addNotifyIncomingOptions, null, OnIncomingConnectionRequest);
-            GD.Print($"{LogName}: Incoming connection notification ID: {incomingConnectionNotification}");
-
             GD.Print($"{LogName}: Server successfully started on port {port} with {connections.Count} active connections");
         }
 
         public void Stop()
         {
+            
             if (p2pInterface != null)
             {
                 // Clean up notifications
@@ -103,12 +104,6 @@ namespace Riptide.Transports.EOS
                 {
                     p2pInterface.RemoveNotifyPeerConnectionClosed(connectionClosedNotification);
                     connectionClosedNotification = 0;
-                }
-
-                if (incomingConnectionNotification != 0)
-                {
-                    p2pInterface.RemoveNotifyPeerConnectionRequest(incomingConnectionNotification);
-                    incomingConnectionNotification = 0;
                 }
 
                 // Close all connections (only if connections was initialized)
@@ -159,11 +154,6 @@ namespace Riptide.Transports.EOS
             }
         }
 
-        private void OnIncomingConnectionRequest(ref OnIncomingConnectionRequestInfo data)
-        {
-            GD.Print($"{LogName}: Incoming connection request from {data.RemoteUserId}");
-            // This is automatically handled by OnConnectionRequested
-        }
 
         private void OnConnectionClosed(ref OnRemoteConnectionClosedInfo data)
         {
@@ -235,6 +225,38 @@ namespace Riptide.Transports.EOS
         {
             DataReceived?.Invoke(this, new DataReceivedEventArgs(dataBuffer, amount,fromConnection));
         }
+
+        /// <summary>
+        /// Shuts down the server and closes all connections
+        /// </summary>
+        public void Shutdown()
+        {
+            GD.Print($"{LogName}: Shutting down server...");
+            
+            // Close all existing connections
+            var connectionList = new List<EOSConnection>(connections.Values);
+            foreach (var connection in connectionList)
+            {
+                Close(connection);
+            }
+            connections.Clear();
+
+            // Clean up notifications
+            if (connectionRequestNotification != 0)
+            {
+                p2pInterface?.RemoveNotifyPeerConnectionRequest(connectionRequestNotification);
+                connectionRequestNotification = 0;
+            }
+
+            if (connectionClosedNotification != 0)
+            {
+                p2pInterface?.RemoveNotifyPeerConnectionClosed(connectionClosedNotification);
+                connectionClosedNotification = 0;
+            }
+
+            GD.Print($"{LogName}: Server shut down successfully");
+        }
+        
 
         private void OnConnected(EOSConnection connection)
         {

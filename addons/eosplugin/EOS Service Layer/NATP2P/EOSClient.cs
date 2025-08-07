@@ -1,4 +1,3 @@
-// EOSClient.cs - Client implementation for EOS P2P
 using Epic.OnlineServices;
 using Epic.OnlineServices.P2P;
 using System;
@@ -8,12 +7,17 @@ using Godot;
 
 namespace Riptide.Transports.EOS
 {
+    /// <summary>
+    /// EOS P2P client transport for Riptide networking
+    /// </summary>
     public class EOSClient : EOSPeer, IClient
     {
+        #region Events (Required by IClient)
         public event EventHandler Connected;
         public event EventHandler ConnectionFailed;
         public event EventHandler<DataReceivedEventArgs> DataReceived;
         public event EventHandler<DisconnectedEventArgs> Disconnected;
+        #endregion
 
         private const string LocalHostName = "localhost";
         private const string LocalHostIP = "127.0.0.1";
@@ -33,6 +37,9 @@ namespace Riptide.Transports.EOS
             localServer = newLocalServer;
         }
 
+        /// <summary>
+        /// Attempts to connect to an EOS P2P host
+        /// </summary>
         public bool Connect(string hostAddress, out Connection connection, out string connectError)
         {
             connection = null;
@@ -47,8 +54,6 @@ namespace Riptide.Transports.EOS
                 return false;
             }
 
-            GD.Print($"{LogName}: P2P interface available, getting local user ID...");
-
             // Get local user ID
             localUserId = EOSInterfaceManager.Instance.ConnectService.GetProductUserId();
             if (localUserId == null)
@@ -58,86 +63,83 @@ namespace Riptide.Transports.EOS
                 return false;
             }
 
-            GD.Print($"{LogName}: Local user ID obtained: {localUserId}");
+            // Start async connection process
+            _ = ConnectAsync(hostAddress);
+            
+            // Create connection object for Riptide (will be updated when connection succeeds)
+            var placeholderUserId = ProductUserId.FromString("connecting");
+            eosConnection = new EOSConnection(placeholderUserId, localUserId, this);
+            connection = eosConnection;
+            
+            return true;
+        }
 
-            ProductUserId targetUserId = null;
+        private async Task<bool> ConnectAsync(string hostAddress)
+        {
+            try
+            {
+                ProductUserId targetUserId = await ResolveTargetUserId(hostAddress);
+                if (targetUserId == null)
+                {
+                    OnConnectionFailed();
+                    return false;
+                }
 
+                // Set up connection closed notification
+                var addNotifyClosedOptions = new AddNotifyPeerConnectionClosedOptions()
+                {
+                    LocalUserId = localUserId,
+                    SocketId = new SocketId() { SocketName = "RiptideSocket" }
+                };
+
+                connectionClosedNotification = p2pInterface.AddNotifyPeerConnectionClosed(ref addNotifyClosedOptions, null, OnConnectionClosed);
+
+                // Update connection with actual target user ID
+                eosConnection = new EOSConnection(targetUserId, localUserId, this);
+
+                // Handle localhost connections
+                if (hostAddress == LocalHostIP || hostAddress == LocalHostName)
+                {
+                    if (localServer == null)
+                    {
+                        GD.PushError($"{LogName}: No local server available for localhost connection");
+                        OnConnectionFailed();
+                        return false;
+                    }
+                    
+                    localServer.AddConnection(eosConnection);
+                    GD.Print($"{LogName}: Localhost connection established");
+                    OnConnected();
+                    return true;
+                }
+
+                // For remote connections, just signal success - let Riptide handle the rest
+                GD.Print($"{LogName}: EOS P2P connection established to {targetUserId}");
+                OnConnected();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                GD.PrintErr($"{LogName}: Exception during connection: {ex.Message}");
+                OnConnectionFailed();
+                return false;
+            }
+        }
+
+        private async Task<ProductUserId> ResolveTargetUserId(string hostAddress)
+        {
             // Handle localhost connections
             if (hostAddress == LocalHostIP || hostAddress == LocalHostName)
             {
                 GD.Print($"{LogName}: Connecting to localhost...");
-                if (localServer == null)
-                {
-                    connectError = $"No locally running server specified. Pass an {nameof(EOSServer)} instance to your {nameof(EOSClient)}'s constructor or call {nameof(ChangeLocalServer)} before connecting locally.";
-                    GD.PushError($"{LogName}: {connectError}");
-                    return false;
-                }
-
-                // For local connections, use the same user ID
-                targetUserId = localUserId;
-                GD.Print($"{LogName}: Using local user ID as target: {targetUserId}");
-            }
-            else
-            {
-                GD.Print($"{LogName}: Remote connection requested, but remote connection logic not implemented");
+                return localUserId; // For local connections, use the same user ID
             }
 
-            // Set up connection closed notification
-            GD.Print($"{LogName}: Setting up connection closed notification...");
-            var addNotifyClosedOptions = new AddNotifyPeerConnectionClosedOptions()
-            {
-                LocalUserId = localUserId,
-                SocketId = new SocketId() { SocketName = "RiptideSocket" }
-            };
-
-            connectionClosedNotification = p2pInterface.AddNotifyPeerConnectionClosed(ref addNotifyClosedOptions, null, OnConnectionClosed);
-            GD.Print($"{LogName}: Connection closed notification ID: {connectionClosedNotification}");
-
-            // Create connection object
-            GD.Print($"{LogName}: Creating EOS connection object...");
-            eosConnection = new EOSConnection(targetUserId, localUserId, this);
-
-            // For localhost, directly add to local server
-            if (hostAddress == LocalHostIP || hostAddress == LocalHostName)
-            {
-                GD.Print($"{LogName}: Adding connection to local server...");
-                localServer.Add(eosConnection);
-                connection = eosConnection;
-                GD.Print($"{LogName}: Localhost connection established successfully");
-                OnConnected();
-                return true;
-            }
-
-            // For remote connections, send a connection request
-            var sendPacketOptions = new SendPacketOptions()
-            {
-                LocalUserId = localUserId,
-                RemoteUserId = targetUserId,
-                SocketId = new SocketId() { SocketName = "RiptideSocket" },
-                Channel = DefaultSocketId,
-                Data = null,
-                AllowDelayedDelivery = false,
-                Reliability = PacketReliability.ReliableOrdered
-            };
-
-            var result = p2pInterface.SendPacket(ref sendPacketOptions);
-            if (result != Result.Success)
-            {
-                connectError = $"Failed to send connection request: {result}";
-                return false;
-            }
-
-            connection = eosConnection;
-            
-            // Connection success will be determined by the server's response
-            // For now, we'll assume success and let the polling handle the rest
-            Task.Run(async () =>
-            {
-                await Task.Delay(100); // Small delay to allow connection to establish
-                OnConnected();
-            });
-
-            return true;
+            // Handle remote connections - TODO: Implement proper ProductUserId resolution
+            // This requires EOS Friends API or lobby system integration
+            GD.PrintErr($"{LogName}: Remote ProductUserId resolution not implemented for: {hostAddress}");
+            GD.PrintErr($"{LogName}: Remote connections require EOS Friends API or lobby system to discover ProductUserId");
+            return null;
         }
 
         private void OnConnectionClosed(ref OnRemoteConnectionClosedInfo data)
@@ -165,6 +167,9 @@ namespace Riptide.Transports.EOS
             }
         }
 
+        /// <summary>
+        /// Disconnects from the server
+        /// </summary>
         public void Disconnect()
         {
             if (eosConnection != null && p2pInterface != null)
@@ -189,17 +194,24 @@ namespace Riptide.Transports.EOS
             }
         }
 
+        /// <summary>
+        /// Polls for incoming messages - required by IPeer interface
+        /// </summary>
         public void Poll()
         {
             if (eosConnection != null)
                 Receive(eosConnection);
         }
 
+        /// <summary>
+        /// Handles received data from EOS P2P - passes to Riptide
+        /// </summary>
         protected override void OnDataReceived(byte[] dataBuffer, int amount, EOSConnection fromConnection)
         {
-            DataReceived?.Invoke(this, new DataReceivedEventArgs(dataBuffer, amount,fromConnection));
+            DataReceived?.Invoke(this, new DataReceivedEventArgs(dataBuffer, amount, fromConnection));
         }
 
+        #region Event Helpers
         private void OnConnected()
         {
             GD.Print($"{LogName}: Connected to server");
@@ -217,5 +229,6 @@ namespace Riptide.Transports.EOS
             GD.Print($"{LogName}: Disconnected from server: {reason}");
             Disconnected?.Invoke(this, new DisconnectedEventArgs(eosConnection, reason));
         }
+        #endregion
     }
 }

@@ -1,0 +1,256 @@
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using Godot;
+
+namespace Riptide.Transports.EOS
+{
+    public class MessageBuffer
+    {
+        private const string LogName = "MessageBuffer";
+        
+        private readonly byte[][] _bufferPool;
+        private readonly ConcurrentQueue<int> _availableBuffers;
+        private readonly int _bufferSize;
+        private readonly int _poolSize;
+        private int _totalBuffersCreated = 0;
+        private int _buffersInUse = 0;
+
+        public MessageBuffer(int bufferSize = 1400, int poolSize = 100)
+        {
+            _bufferSize = bufferSize;
+            _poolSize = poolSize;
+            _bufferPool = new byte[poolSize][];
+            _availableBuffers = new ConcurrentQueue<int>();
+
+            // Pre-allocate buffers
+            for (int i = 0; i < poolSize; i++)
+            {
+                _bufferPool[i] = new byte[bufferSize];
+                _availableBuffers.Enqueue(i);
+                _totalBuffersCreated++;
+            }
+
+            GD.Print($"{LogName}: Initialized buffer pool with {poolSize} buffers of {bufferSize} bytes each");
+        }
+
+        public BufferLease RentBuffer(int requiredSize = 0)
+        {
+            if (requiredSize > _bufferSize)
+            {
+                GD.PrintErr($"{LogName}: Requested size {requiredSize} exceeds buffer size {_bufferSize}");
+                return new BufferLease(new byte[requiredSize], -1, this); // Fallback to new allocation
+            }
+
+            if (_availableBuffers.TryDequeue(out int bufferIndex))
+            {
+                _buffersInUse++;
+                return new BufferLease(_bufferPool[bufferIndex], bufferIndex, this);
+            }
+
+            // Pool exhausted, create temporary buffer
+            GD.PrintErr($"{LogName}: Buffer pool exhausted, creating temporary buffer");
+            return new BufferLease(new byte[Math.Max(requiredSize, _bufferSize)], -1, this);
+        }
+
+        internal void ReturnBuffer(int bufferIndex)
+        {
+            if (bufferIndex >= 0 && bufferIndex < _poolSize)
+            {
+                _availableBuffers.Enqueue(bufferIndex);
+                _buffersInUse--;
+            }
+            // Temporary buffers (index -1) are just let go for GC
+        }
+
+        public int AvailableBuffers => _availableBuffers.Count;
+        public int BuffersInUse => _buffersInUse;
+        public int TotalBuffers => _totalBuffersCreated;
+    }
+
+    public struct BufferLease : IDisposable
+    {
+        private readonly MessageBuffer _pool;
+        private readonly int _bufferIndex;
+        private bool _disposed;
+
+        public byte[] Buffer { get; }
+
+        internal BufferLease(byte[] buffer, int bufferIndex, MessageBuffer pool)
+        {
+            Buffer = buffer;
+            _bufferIndex = bufferIndex;
+            _pool = pool;
+            _disposed = false;
+        }
+
+        public void Dispose()
+        {
+            if (!_disposed)
+            {
+                _pool?.ReturnBuffer(_bufferIndex);
+                _disposed = true;
+            }
+        }
+    }
+
+    public class MessageQueue
+    {
+        private const string LogName = "MessageQueue";
+        
+        private readonly ConcurrentQueue<QueuedMessage> _messageQueue;
+        private readonly int _maxQueueSize;
+        private int _currentQueueSize = 0;
+        private long _totalMessagesQueued = 0;
+        private long _totalMessagesDropped = 0;
+
+        public MessageQueue(int maxQueueSize = 1000)
+        {
+            _maxQueueSize = maxQueueSize;
+            _messageQueue = new ConcurrentQueue<QueuedMessage>();
+        }
+
+        public bool TryEnqueue(byte[] data, int length, DateTime timestamp, EOSConnection connection, bool isHandshake = false)
+        {
+            if (_currentQueueSize >= _maxQueueSize)
+            {
+                _totalMessagesDropped++;
+                GD.PrintErr($"{LogName}: Message queue full ({_maxQueueSize}), dropping message");
+                return false;
+            }
+
+            var message = new QueuedMessage
+            {
+                Data = new byte[length],
+                Length = length,
+                Timestamp = timestamp,
+                Connection = connection,
+                IsHandshake = isHandshake
+            };
+            
+            Array.Copy(data, message.Data, length);
+            _messageQueue.Enqueue(message);
+            
+            _currentQueueSize++;
+            _totalMessagesQueued++;
+            
+            return true;
+        }
+
+        public bool TryDequeue(out QueuedMessage message)
+        {
+            if (_messageQueue.TryDequeue(out message))
+            {
+                _currentQueueSize--;
+                return true;
+            }
+            
+            message = default;
+            return false;
+        }
+
+        public int Count => _currentQueueSize;
+        public long TotalQueued => _totalMessagesQueued;
+        public long TotalDropped => _totalMessagesDropped;
+
+        public void Clear()
+        {
+            while (_messageQueue.TryDequeue(out _))
+            {
+                _currentQueueSize--;
+            }
+            GD.Print($"{LogName}: Queue cleared");
+        }
+    }
+
+    public struct QueuedMessage
+    {
+        public byte[] Data;
+        public int Length;
+        public DateTime Timestamp;
+        public EOSConnection Connection;
+        public bool IsHandshake;
+
+        public TimeSpan Age => DateTime.UtcNow - Timestamp;
+    }
+
+    public class ConnectionPool
+    {
+        private const string LogName = "ConnectionPool";
+        
+        private readonly ConcurrentQueue<EOSConnection> _availableConnections;
+        private readonly HashSet<EOSConnection> _activeConnections;
+        private readonly object _lockObject = new object();
+        private int _totalConnectionsCreated = 0;
+        private readonly int _maxPoolSize;
+
+        public ConnectionPool(int maxPoolSize = 50)
+        {
+            _maxPoolSize = maxPoolSize;
+            _availableConnections = new ConcurrentQueue<EOSConnection>();
+            _activeConnections = new HashSet<EOSConnection>();
+        }
+
+        public EOSConnection RentConnection(Epic.OnlineServices.ProductUserId remoteUserId, Epic.OnlineServices.ProductUserId localUserId, EOSPeer peer)
+        {
+            // Try to reuse an existing connection
+            if (_availableConnections.TryDequeue(out EOSConnection connection))
+            {
+                // Reset the connection for reuse
+                connection.SetState(EOSConnectionState.Disconnected);
+                lock (_lockObject)
+                {
+                    _activeConnections.Add(connection);
+                }
+                GD.Print($"{LogName}: Reused pooled connection");
+                return connection;
+            }
+
+            // Create new connection
+            connection = new EOSConnection(remoteUserId, localUserId, peer);
+            _totalConnectionsCreated++;
+            
+            lock (_lockObject)
+            {
+                _activeConnections.Add(connection);
+            }
+            
+            GD.Print($"{LogName}: Created new connection (total: {_totalConnectionsCreated})");
+            return connection;
+        }
+
+        public void ReturnConnection(EOSConnection connection)
+        {
+            if (connection == null) return;
+
+            lock (_lockObject)
+            {
+                _activeConnections.Remove(connection);
+            }
+
+            if (_availableConnections.Count < _maxPoolSize)
+            {
+                _availableConnections.Enqueue(connection);
+                GD.Print($"{LogName}: Returned connection to pool");
+            }
+            else
+            {
+                GD.Print($"{LogName}: Pool full, connection will be garbage collected");
+            }
+        }
+
+        public int ActiveConnections
+        {
+            get
+            {
+                lock (_lockObject)
+                {
+                    return _activeConnections.Count;
+                }
+            }
+        }
+
+        public int AvailableConnections => _availableConnections.Count;
+        public int TotalCreated => _totalConnectionsCreated;
+    }
+}

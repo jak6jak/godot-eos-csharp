@@ -3,13 +3,14 @@ using Epic.OnlineServices;
 
 namespace Riptide.Transports.EOS
 {
+    /// <summary>
+    /// EOS P2P connection implementation for Riptide networking
+    /// </summary>
     public class EOSConnection : Connection, IEquatable<EOSConnection>
     {
         public readonly ProductUserId RemoteUserId;
         public readonly ProductUserId LocalUserId;
-
-        internal bool DidReceiveConnect;
-
+        
         private readonly EOSPeer peer;
 
         internal EOSConnection(ProductUserId remoteUserId, ProductUserId localUserId, EOSPeer peer)
@@ -19,6 +20,9 @@ namespace Riptide.Transports.EOS
             this.peer = peer;
         }
 
+        /// <summary>
+        /// Sends data through EOS P2P to the remote user - used by Riptide's reliability system
+        /// </summary>
         protected override void Send(byte[] dataBuffer, int amount)
         {
             peer.Send(dataBuffer, amount, RemoteUserId);
